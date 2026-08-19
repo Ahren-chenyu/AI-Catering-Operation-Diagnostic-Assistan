@@ -122,3 +122,62 @@ export interface DiagnosisResult {
   insights: AIInsight[];
   unknownFactors: string[];
 }
+
+/** DeepSeek 基于 DiagnosisResult 生成的结构化经营建议 */
+export interface RecommendedAction {
+  title: string;
+  objective: string;
+  steps: string[];
+  duration: string;
+  budget: string;
+  targetMetric: string;
+  reviewMetrics: string[];
+}
+
+export interface AIInsightResult {
+  summary: string;
+  reasoning: string;
+  recommendedAction: RecommendedAction;
+}
+
+/** 当天诊断快照 payload：规则层 + DeepSeek 结果 */
+export interface DiagnosisSnapshotPayload {
+  diagnosis: DiagnosisResult;
+  aiInsight: AIInsightResult | null;
+}
+
+/** Action Plan 页面展示模型（DeepSeek 或规则引擎 fallback） */
+export interface ActionPlanViewModel {
+  source: "deepseek" | "rules";
+  coreProblem: string;
+  title: string;
+  reason: string;
+  steps: string[];
+  duration: string;
+  budget: string;
+  budgetNote: string;
+  targetMetric: string;
+  targetNote?: string;
+  reviewMetrics: string[];
+}
+
+/** 行动轮次记录 */
+export interface ActionRoundRecord {
+  id: string;
+  storeId: string;
+  startedAt: string;
+  endAt: string;
+  durationLabel: string;
+  plan: ActionPlanViewModel;
+  reviewStatus: "in_progress" | "no_data" | "completed";
+  review: ActionReviewResult | null;
+}
+
+/** AI 自动复盘结果 */
+export interface ActionReviewResult {
+  summary: string;
+  metricAnalysis: string;
+  goalAssessment: string;
+  nextSteps: string;
+  generatedAt: string;
+}

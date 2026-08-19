@@ -1,43 +1,66 @@
-import type { ActionPlan } from "@/types";
+import type { ActionPlanViewModel } from "@/types";
 
 interface ActionPlanDetailProps {
-  plan: ActionPlan;
+  view: ActionPlanViewModel;
 }
 
-export default function ActionPlanDetail({ plan }: ActionPlanDetailProps) {
+export default function ActionPlanDetail({ view }: ActionPlanDetailProps) {
+  const sourceLabel =
+    view.source === "deepseek"
+      ? "DeepSeek AI 建议"
+      : "规则引擎 fallback";
+
   return (
     <div className="space-y-6">
       <div className="rounded-xl border border-stone-200 bg-white p-6 shadow-card">
-        <div className="flex items-start justify-between">
+        <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-sm font-medium text-stone-500">AI 建议方案</p>
-            <h2 className="mt-1 text-2xl font-bold text-stone-900">{plan.title}</h2>
+            <p className="text-sm font-medium text-stone-500">AI 推荐行动</p>
+            <h2 className="mt-1 text-2xl font-bold text-stone-900">{view.title}</h2>
           </div>
-          <span className="rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700 ring-1 ring-brand-200">
-            可执行
+          <span className="shrink-0 rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700 ring-1 ring-brand-200">
+            {sourceLabel}
           </span>
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <InfoBlock title="核心问题" content={plan.coreProblem} variant="problem" />
-        <InfoBlock title="建议原因" content={plan.reason} variant="reason" />
+      <InfoBlock
+        title="目标"
+        content={view.coreProblem}
+        variant="problem"
+      />
+
+      <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-5">
+        <h3 className="text-sm font-semibold text-stone-900">执行步骤</h3>
+        <ul className="mt-3 space-y-2.5">
+          {view.steps.map((step, i) => (
+            <li key={i} className="flex items-start gap-2.5 text-sm text-stone-700">
+              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-bold text-brand-700">
+                {i + 1}
+              </span>
+              {step}
+            </li>
+          ))}
+        </ul>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <StatBlock label="执行周期" value={plan.duration} />
+        <StatBlock label="执行周期" value={view.duration} plainValue />
         <StatBlock
           label="AI 测算预算"
-          value={plan.budget}
-          note={plan.budgetNote}
+          value={view.budget}
+          note={view.budgetNote}
+          plainValue
         />
-        <StatBlock label="目标" value={plan.target} />
+        <StatBlock
+          label="目标指标"
+          value={view.targetMetric}
+          note={view.targetNote}
+          plainValue
+        />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <MetricList title="核心指标" items={plan.coreMetrics} color="brand" />
-        <MetricList title="复盘指标" items={plan.reviewMetrics} color="stone" />
-      </div>
+      <MetricList title="复盘指标" items={view.reviewMetrics} />
     </div>
   );
 }
@@ -66,40 +89,48 @@ function StatBlock({
   label,
   value,
   note,
+  plainValue,
 }: {
   label: string;
   value: string;
   note?: string;
+  plainValue?: boolean;
 }) {
   return (
     <div className="rounded-xl border border-stone-200 bg-white p-5 shadow-card">
-      <p className="text-sm font-medium text-stone-500">{label}</p>
-      <p className="mt-2 text-xl font-bold text-stone-900">{value}</p>
+      <p
+        className={
+          plainValue
+            ? "text-sm font-semibold text-stone-900"
+            : "text-sm font-medium text-stone-500"
+        }
+      >
+        {label}
+      </p>
+      <p
+        className={
+          plainValue
+            ? "mt-2 text-sm font-normal text-stone-900"
+            : "mt-2 text-xl font-bold text-stone-900"
+        }
+      >
+        {value}
+      </p>
       {note && (
-        <p className="mt-1 text-xs text-amber-600">{note}</p>
+        <p className="mt-1 text-xs font-medium text-amber-600">{note}</p>
       )}
     </div>
   );
 }
 
-function MetricList({
-  title,
-  items,
-  color,
-}: {
-  title: string;
-  items: string[];
-  color: "brand" | "stone";
-}) {
-  const dotColor = color === "brand" ? "bg-brand-500" : "bg-stone-400";
-
+function MetricList({ title, items }: { title: string; items: string[] }) {
   return (
     <div className="rounded-xl border border-stone-200 bg-white p-5 shadow-card">
       <h3 className="text-sm font-semibold text-stone-900">{title}</h3>
       <ul className="mt-3 space-y-2.5">
         {items.map((item, i) => (
           <li key={i} className="flex items-center gap-2.5 text-sm text-stone-700">
-            <span className={`h-1.5 w-1.5 rounded-full ${dotColor}`} />
+            <span className="h-1.5 w-1.5 rounded-full bg-stone-400" />
             {item}
           </li>
         ))}

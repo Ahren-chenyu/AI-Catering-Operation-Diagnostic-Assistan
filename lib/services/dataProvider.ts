@@ -141,6 +141,48 @@ export async function getDailyMetrics(
   }
 }
 
+export async function getDailyMetricsInRange(
+  storeId: string,
+  startDate: string,
+  endDate: string
+): Promise<RawDailyMetrics[]> {
+  if (!isSupabaseConfigured()) {
+    const mock = getMockDailyMetrics(storeId, mockTodayMetrics.date);
+    if (!mock) {
+      return [];
+    }
+    if (mock.date >= startDate && mock.date <= endDate) {
+      return [mock];
+    }
+    return [];
+  }
+
+  const supabase = getSupabaseAdmin();
+  if (!supabase) {
+    return [];
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("daily_metrics")
+      .select(
+        "date, revenue, orders, average_order_value, new_customers, returning_customers"
+      )
+      .eq("store_id", storeId)
+      .gte("date", startDate)
+      .lte("date", endDate)
+      .order("date", { ascending: true });
+
+    if (error || !data) {
+      return [];
+    }
+
+    return (data as DailyMetricsRow[]).map(mapDailyMetricsRow);
+  } catch {
+    return [];
+  }
+}
+
 export async function getHistoricalBaseline(
   storeId: string
 ): Promise<HistoricalBaseline | null> {

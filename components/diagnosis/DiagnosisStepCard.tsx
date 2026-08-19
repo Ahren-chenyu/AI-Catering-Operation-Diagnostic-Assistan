@@ -1,5 +1,5 @@
 import type { DiagnosisStep, EvidenceItem } from "@/types";
-import { changeColor, formatChange } from "@/lib/utils";
+import { changeBg, formatChange } from "@/lib/utils";
 
 const sourceLabel = {
   known: "已知事实",
@@ -25,7 +25,9 @@ function EvidenceRow({ item }: { item: EvidenceItem }) {
       <div className="flex items-center gap-3">
         <span className="text-sm font-semibold text-stone-900">{item.value}</span>
         {item.change !== undefined && (
-          <span className={`text-sm font-semibold ${changeColor(item.change)}`}>
+          <span
+            className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold ${changeBg(item.change)}`}
+          >
             {formatChange(item.change)}
           </span>
         )}

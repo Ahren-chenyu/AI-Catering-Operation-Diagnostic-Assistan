@@ -1,15 +1,29 @@
 import Header from "@/components/layout/Header";
 import DiagnosisStepCard from "@/components/diagnosis/DiagnosisStepCard";
 import { EvidenceList, InferenceList } from "@/components/diagnosis/DiagnosisEvidence";
+import {
+  DiagnosisAIInsightSection,
+  DiagnosisAIProvider,
+} from "@/components/diagnosis/DiagnosisAIProvider";
 import AIAlertCard from "@/components/ui/AIAlertCard";
 import ButtonLink from "@/components/ui/ButtonLink";
 import { MetricChangeRow } from "@/components/ui/MetricCard";
-import { fetchDiagnosisPageData } from "@/lib/api/serverFetch";
+import { runDiagnosis } from "@/lib/ai/diagnosisEngine";
+import { getMetricsFingerprint } from "@/lib/metrics/getMetricsFingerprint";
+import {
+  getDefaultQueryDate,
+  loadBusinessContext,
+} from "@/lib/services/businessContextService";
 import { formatCurrency } from "@/lib/utils";
 
+const STORE_ID = "store-001";
+
 export default async function DiagnosisPage() {
-  const { data } = await fetchDiagnosisPageData();
-  const { store, metrics, diagnosis } = data;
+  const date = getDefaultQueryDate();
+  const context = await loadBusinessContext(STORE_ID, date);
+  const { store, metrics, baseline } = context;
+  const diagnosis = runDiagnosis({ metrics, baseline });
+  const metricsFingerprint = getMetricsFingerprint(metrics);
 
   const allEvidence = [
     ...diagnosis.facts,
@@ -19,13 +33,26 @@ export default async function DiagnosisPage() {
   return (
     <>
       <Header store={store} date={metrics.date} />
-      <div className="px-8 py-6">
+      <DiagnosisAIProvider
+        storeId={STORE_ID}
+        date={date}
+        metricsFingerprint={metricsFingerprint}
+      >
+        <div className="px-8 py-6">
         <div className="mb-8">
-          <h2 className="text-xl font-bold text-stone-900">AI 经营诊断</h2>
+          <h2 className="text-xl font-bold text-stone-900">AI经营分析</h2>
           <p className="mt-1 text-sm text-stone-500">
             回答：为什么营业额下降？所有判断均附带数据证据
           </p>
         </div>
+
+        <section className="mb-8">
+          <h3 className="mb-1 text-sm font-semibold uppercase tracking-wider text-stone-400">
+            AI 经营解读
+          </h3>
+          <p className="mb-4 text-xs text-stone-500">AI 分析 · DeepSeek 根据事实进行解释</p>
+          <DiagnosisAIInsightSection />
+        </section>
 
         <section className="mb-8">
           <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-stone-400">
@@ -36,26 +63,36 @@ export default async function DiagnosisPage() {
               label="营业额变化"
               value={formatCurrency(metrics.revenue)}
               change={metrics.revenueChange}
+              compactChange
+              badgeChange
             />
             <MetricChangeRow
               label="订单量变化"
               value={`${metrics.orders} 单`}
               change={metrics.ordersChange}
+              compactChange
+              badgeChange
             />
             <MetricChangeRow
               label="客单价变化"
               value={formatCurrency(metrics.averageOrderValue)}
               change={metrics.averageOrderValueChange}
+              compactChange
+              badgeChange
             />
             <MetricChangeRow
               label="新客变化"
               value={`${metrics.newCustomers} 人`}
               change={metrics.newCustomersChange}
+              compactChange
+              badgeChange
             />
             <MetricChangeRow
               label="老客变化"
               value={`${metrics.returningCustomers} 人`}
               change={metrics.returningCustomersChange}
+              compactChange
+              badgeChange
             />
           </div>
         </section>
@@ -72,9 +109,10 @@ export default async function DiagnosisPage() {
         </section>
 
         <section className="mb-8">
-          <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-stone-400">
+          <h3 className="mb-1 text-sm font-semibold uppercase tracking-wider text-stone-400">
             诊断结论
           </h3>
+          <p className="mb-4 text-xs text-stone-500">数据事实 · 来自系统计算</p>
           <div className="rounded-xl border border-brand-200 bg-brand-50/50 p-6">
             <div className="flex items-start gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-100">
@@ -83,7 +121,7 @@ export default async function DiagnosisPage() {
                 </svg>
               </div>
               <div>
-                <p className="text-sm font-medium text-brand-600">综合诊断结论</p>
+                <p className="text-sm font-medium text-brand-600">综合诊断结论（规则引擎）</p>
                 <p className="mt-2 text-base font-semibold leading-relaxed text-stone-900">
                   {diagnosis.summary}
                 </p>
@@ -93,30 +131,34 @@ export default async function DiagnosisPage() {
         </section>
 
         <section className="mb-8">
-          <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-stone-400">
+          <h3 className="mb-1 text-sm font-semibold uppercase tracking-wider text-stone-400">
             数据证据
           </h3>
+          <p className="mb-4 text-xs text-stone-500">数据事实 · 来自系统计算</p>
           <EvidenceList items={allEvidence} />
         </section>
 
         <section className="mb-8">
-          <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-stone-400">
-            已知事实
+          <h3 className="mb-1 text-sm font-semibold uppercase tracking-wider text-stone-400">
+            数据事实
           </h3>
+          <p className="mb-4 text-xs text-stone-500">来自系统计算</p>
           <EvidenceList items={diagnosis.facts} />
         </section>
 
         <section className="mb-8">
-          <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-stone-400">
-            AI 推断
+          <h3 className="mb-1 text-sm font-semibold uppercase tracking-wider text-stone-400">
+            规则推断
           </h3>
+          <p className="mb-4 text-xs text-stone-500">数据事实 · 来自系统计算</p>
           <InferenceList items={diagnosis.inferences} />
         </section>
 
         <section className="mb-8">
-          <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-stone-400">
+          <h3 className="mb-1 text-sm font-semibold uppercase tracking-wider text-stone-400">
             诊断逻辑
           </h3>
+          <p className="mb-4 text-xs text-stone-500">数据事实 · 来自系统计算</p>
           <div className="space-y-4">
             {diagnosis.steps.map((step) => (
               <DiagnosisStepCard key={step.level} step={step} />
@@ -126,9 +168,10 @@ export default async function DiagnosisPage() {
 
         {diagnosis.unknownFactors.length > 0 && (
           <section className="mb-8">
-            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-stone-400">
+            <h3 className="mb-1 text-sm font-semibold uppercase tracking-wider text-stone-400">
               当前无法判断
             </h3>
+            <p className="mb-4 text-xs text-stone-500">来自 DiagnosisResult.unknownFactors</p>
             <div className="space-y-3">
               {diagnosis.unknownFactors.map((factor, i) => (
                 <AIAlertCard
@@ -158,7 +201,8 @@ export default async function DiagnosisPage() {
             <ButtonLink href="/action-plan">查看行动计划</ButtonLink>
           </div>
         </section>
-      </div>
+        </div>
+      </DiagnosisAIProvider>
     </>
   );
 }

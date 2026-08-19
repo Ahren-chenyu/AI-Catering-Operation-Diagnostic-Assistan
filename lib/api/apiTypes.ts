@@ -1,6 +1,7 @@
 import type {
   ActionPlan,
   AIInsight,
+  AIInsightResult,
   DailyMetrics,
   DiagnosisResult,
   RevenueMetrics,
@@ -19,6 +20,8 @@ export interface DiagnosisApiResponse {
   store: Store;
   metrics: DailyMetrics;
   diagnosis: DiagnosisResult;
+  aiInsight?: AIInsightResult | null;
+  fromSnapshot?: boolean;
 }
 
 export interface ActionPlanApiResponse {

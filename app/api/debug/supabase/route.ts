@@ -4,10 +4,14 @@ import {
   getHistoricalBaseline,
   getStore,
 } from "@/lib/services/dataProvider";
+import { blockDebugRouteInProduction } from "@/lib/api/debugRouteGuard";
 import { getSupabaseAdmin, isSupabaseConfigured } from "@/lib/db/supabase";
 import { NextResponse } from "next/server";
 
 export async function GET() {
+  const blocked = blockDebugRouteInProduction();
+  if (blocked) return blocked;
+
   const storeId = "store-001";
   const date = mockTodayMetrics.date;
 

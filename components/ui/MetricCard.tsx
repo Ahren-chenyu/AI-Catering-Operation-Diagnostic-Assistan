@@ -32,17 +32,39 @@ export function MetricChangeRow({
   label,
   value,
   change,
+  compactChange,
+  badgeChange,
 }: {
   label: string;
   value: string;
   change: number;
+  compactChange?: boolean;
+  badgeChange?: boolean;
 }) {
   return (
     <div className="flex items-center justify-between rounded-lg border border-stone-100 bg-surface-muted px-4 py-3">
       <span className="text-sm text-stone-600">{label}</span>
       <div className="flex items-center gap-4">
         <span className="text-sm font-semibold text-stone-900">{value}</span>
-        <span className={cn("text-sm font-semibold", changeColor(change))}>{formatChange(change)}</span>
+        {badgeChange ? (
+          <span
+            className={cn(
+              "inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold",
+              changeBg(change)
+            )}
+          >
+            {formatChange(change)}
+          </span>
+        ) : (
+          <span
+            className={cn(
+              compactChange ? "text-xs font-semibold" : "text-sm font-semibold",
+              changeColor(change)
+            )}
+          >
+            {formatChange(change)}
+          </span>
+        )}
       </div>
     </div>
   );

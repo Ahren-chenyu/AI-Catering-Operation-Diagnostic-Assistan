@@ -12,6 +12,7 @@ import type {
   PageDataResult,
 } from "@/lib/api/apiTypes";
 import { getDefaultQueryDate } from "@/lib/services/businessContextService";
+import { getOrCreateDailyDiagnosisSnapshot } from "@/lib/services/dailyDiagnosisSnapshotService";
 
 function getApiBaseUrl(): string {
   if (process.env.NEXT_PUBLIC_APP_URL?.trim()) {
@@ -73,6 +74,23 @@ export async function fetchDiagnosisPageData(): Promise<
 
   if (apiData?.store && apiData?.diagnosis) {
     return { data: apiData, source: "api" };
+  }
+
+  try {
+    const date = getDefaultQueryDate();
+    const snapshot = await getOrCreateDailyDiagnosisSnapshot("store-001", date);
+    return {
+      data: {
+        store: snapshot.store,
+        metrics: snapshot.metrics,
+        diagnosis: snapshot.diagnosis,
+        aiInsight: snapshot.aiInsight,
+        fromSnapshot: snapshot.fromSnapshot,
+      },
+      source: "api",
+    };
+  } catch (error) {
+    console.warn("[serverFetch] direct snapshot failed:", error);
   }
 
   return { data: getDiagnosisFallback(), source: "fallback" };

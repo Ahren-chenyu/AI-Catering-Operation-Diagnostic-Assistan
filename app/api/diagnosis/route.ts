@@ -1,10 +1,9 @@
 import { apiErrorResponse } from "@/lib/api/apiErrorResponse";
 import { parseApiQueryParams } from "@/lib/api/parseQueryParams";
-import { runDiagnosis } from "@/lib/ai/diagnosisEngine";
 import {
   getDefaultQueryDate,
-  loadBusinessContext,
 } from "@/lib/services/businessContextService";
+import { getOrCreateDailyDiagnosisSnapshot } from "@/lib/services/dailyDiagnosisSnapshotService";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
@@ -14,16 +13,14 @@ export async function GET(request: Request) {
       getDefaultQueryDate()
     );
 
-    const context = await loadBusinessContext(storeId, date);
-    const diagnosis = runDiagnosis({
-      metrics: context.metrics,
-      baseline: context.baseline,
-    });
+    const snapshot = await getOrCreateDailyDiagnosisSnapshot(storeId, date);
 
     return NextResponse.json({
-      store: context.store,
-      metrics: context.metrics,
-      diagnosis,
+      store: snapshot.store,
+      metrics: snapshot.metrics,
+      diagnosis: snapshot.diagnosis,
+      aiInsight: snapshot.aiInsight,
+      fromSnapshot: snapshot.fromSnapshot,
     });
   } catch (error) {
     return apiErrorResponse(error);
