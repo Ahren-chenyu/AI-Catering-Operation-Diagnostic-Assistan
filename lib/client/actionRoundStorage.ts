@@ -79,6 +79,11 @@ export function updateActionRound(
   writeActionRounds(storeId, rounds);
 }
 
+export function deleteActionRound(storeId: string, roundId: string): void {
+  const rounds = readActionRounds(storeId).filter((round) => round.id !== roundId);
+  writeActionRounds(storeId, rounds);
+}
+
 export function isRoundPeriodEnded(round: ActionRoundRecord): boolean {
   return Date.now() >= new Date(round.endAt).getTime();
 }

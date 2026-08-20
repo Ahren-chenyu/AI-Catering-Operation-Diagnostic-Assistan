@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import {
+  deleteActionRound,
   isRoundPeriodEnded,
   readActionRounds,
   updateActionRound,
@@ -57,6 +58,9 @@ export default function ReviewRecordsSection({
 }: ReviewRecordsSectionProps) {
   const [rounds, setRounds] = useState<ActionRoundRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pendingDeleteRound, setPendingDeleteRound] = useState<ActionRoundRecord | null>(
+    null
+  );
 
   const refreshRounds = useCallback(() => {
     setRounds(readActionRounds(storeId));
@@ -95,6 +99,12 @@ export default function ReviewRecordsSection({
     };
   }, [storeId, refreshRounds]);
 
+  const handleDeleteRound = (roundId: string) => {
+    deleteActionRound(storeId, roundId);
+    refreshRounds();
+    setPendingDeleteRound(null);
+  };
+
   if (loading) {
     return (
       <div className="rounded-xl border border-stone-200 bg-white p-6 shadow-card">
@@ -118,15 +128,35 @@ export default function ReviewRecordsSection({
   }
 
   return (
-    <div className="space-y-6">
-      {rounds.map((round) => (
-        <ReviewRoundCard key={round.id} round={round} />
-      ))}
-    </div>
+    <>
+      <div className="space-y-6">
+        {rounds.map((round) => (
+          <ReviewRoundCard
+            key={round.id}
+            round={round}
+            onDelete={() => setPendingDeleteRound(round)}
+          />
+        ))}
+      </div>
+
+      {pendingDeleteRound && (
+        <DeleteConfirmDialog
+          title={pendingDeleteRound.plan.title}
+          onCancel={() => setPendingDeleteRound(null)}
+          onConfirm={() => handleDeleteRound(pendingDeleteRound.id)}
+        />
+      )}
+    </>
   );
 }
 
-function ReviewRoundCard({ round }: { round: ActionRoundRecord }) {
+function ReviewRoundCard({
+  round,
+  onDelete,
+}: {
+  round: ActionRoundRecord;
+  onDelete: () => void;
+}) {
   const inProgress = !isRoundPeriodEnded(round);
   const showEmpty =
     inProgress ||
@@ -134,8 +164,19 @@ function ReviewRoundCard({ round }: { round: ActionRoundRecord }) {
     round.reviewStatus === "in_progress";
 
   return (
-    <div className="rounded-xl border border-stone-200 bg-white p-6 shadow-card">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+    <div className="relative rounded-xl border border-stone-200 bg-white p-6 pr-14 shadow-card">
+      <button
+        type="button"
+        onClick={onDelete}
+        className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full border border-stone-300 text-stone-500 transition-colors hover:border-stone-400 hover:bg-stone-50 hover:text-stone-700"
+        aria-label="删除行动计划"
+      >
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+
+      <div className="flex flex-wrap items-start justify-between gap-4 pr-8">
         <div>
           <p className="text-sm font-medium text-stone-500">行动计划</p>
           <h3 className="mt-1 text-lg font-bold text-stone-900">{round.plan.title}</h3>
@@ -181,6 +222,59 @@ function ReviewRoundCard({ round }: { round: ActionRoundRecord }) {
         ) : (
           <p className="mt-2 text-sm text-stone-500">暂无</p>
         )}
+      </div>
+    </div>
+  );
+}
+
+function DeleteConfirmDialog({
+  title,
+  onCancel,
+  onConfirm,
+}: {
+  title: string;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <button
+        type="button"
+        className="absolute inset-0 bg-stone-900/40"
+        aria-label="关闭确认弹窗"
+        onClick={onCancel}
+      />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="delete-confirm-title"
+        className="relative w-full max-w-sm rounded-xl border border-stone-200 bg-white p-6 shadow-card"
+      >
+        <h3
+          id="delete-confirm-title"
+          className="text-base font-semibold text-stone-900"
+        >
+          确认删除
+        </h3>
+        <p className="mt-2 text-sm leading-relaxed text-stone-600">
+          确定要删除「{title}」这条行动计划吗？删除后无法恢复。
+        </p>
+        <div className="mt-6 flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="rounded-lg border border-stone-300 px-4 py-2 text-sm font-medium text-stone-700 transition-colors hover:bg-stone-50"
+          >
+            取消
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700"
+          >
+            确认删除
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -1,10 +1,15 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Sidebar from "@/components/layout/Sidebar";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "AI 餐饮经营诊断助手",
   description: "让餐饮经营者不用自己分析复杂报表，也能知道门店发生了什么、为什么发生以及下一步应该做什么。",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({
@@ -17,7 +22,7 @@ export default function RootLayout({
       <body>
         <div className="min-h-screen">
           <Sidebar />
-          <main className="pl-64">{children}</main>
+          <main className="min-w-0 pt-14 md:pt-0 md:pl-64">{children}</main>
         </div>
       </body>
     </html>
