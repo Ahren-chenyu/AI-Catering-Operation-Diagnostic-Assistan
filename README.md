@@ -429,20 +429,9 @@ AI 的价值在于帮助用户缩短：
 - Tailwind CSS
 - 模拟业务数据（无真实后端 / AI API）
 
-## 本地运行（Mac）
+## 网址
 
-```bash
-# 1. 进入项目目录
-cd AI-Catering-Operation-Diagnostic-Assistan
-
-# 2. 安装依赖（需 Node.js 18+）
-npm install
-
-# 3. 启动开发服务器
-npm run dev
-```
-
-浏览器打开 [http://localhost:3000](http://localhost:3000)，将自动跳转到 `/dashboard`。
+http://ai-catering-operations-agent.vercel.app
 
 ## 核心页面
 
