@@ -6,7 +6,10 @@ import {
   todayMetrics as mockTodayMetrics,
 } from "@/lib/data/mockData";
 import { getSupabaseAdmin, isSupabaseConfigured } from "@/lib/db/supabase";
+import { withTimeout } from "@/lib/utils/withTimeout";
 import type { HistoricalBaseline, RawDailyMetrics, Store } from "@/types";
+
+const SUPABASE_TIMEOUT_MS = 5000;
 
 interface StoreRow {
   id: string;
@@ -92,11 +95,16 @@ export async function getStore(storeId: string): Promise<Store | null> {
   }
 
   try {
-    const { data, error } = await supabase
-      .from("stores")
-      .select("id, name, type")
-      .eq("id", storeId)
-      .maybeSingle();
+    const { data, error } = await withTimeout(
+      (async () =>
+        supabase
+          .from("stores")
+          .select("id, name, type")
+          .eq("id", storeId)
+          .maybeSingle())(),
+      SUPABASE_TIMEOUT_MS,
+      "Supabase store query timed out"
+    );
 
     if (error || !data) {
       return getMockStore(storeId);
@@ -122,14 +130,19 @@ export async function getDailyMetrics(
   }
 
   try {
-    const { data, error } = await supabase
-      .from("daily_metrics")
-      .select(
-        "date, revenue, orders, average_order_value, new_customers, returning_customers"
-      )
-      .eq("store_id", storeId)
-      .eq("date", date)
-      .maybeSingle();
+    const { data, error } = await withTimeout(
+      (async () =>
+        supabase
+          .from("daily_metrics")
+          .select(
+            "date, revenue, orders, average_order_value, new_customers, returning_customers"
+          )
+          .eq("store_id", storeId)
+          .eq("date", date)
+          .maybeSingle())(),
+      SUPABASE_TIMEOUT_MS,
+      "Supabase daily metrics query timed out"
+    );
 
     if (error || !data) {
       return getMockDailyMetrics(storeId, date);
@@ -163,15 +176,20 @@ export async function getDailyMetricsInRange(
   }
 
   try {
-    const { data, error } = await supabase
-      .from("daily_metrics")
-      .select(
-        "date, revenue, orders, average_order_value, new_customers, returning_customers"
-      )
-      .eq("store_id", storeId)
-      .gte("date", startDate)
-      .lte("date", endDate)
-      .order("date", { ascending: true });
+    const { data, error } = await withTimeout(
+      (async () =>
+        supabase
+          .from("daily_metrics")
+          .select(
+            "date, revenue, orders, average_order_value, new_customers, returning_customers"
+          )
+          .eq("store_id", storeId)
+          .gte("date", startDate)
+          .lte("date", endDate)
+          .order("date", { ascending: true }))(),
+      SUPABASE_TIMEOUT_MS,
+      "Supabase daily metrics range query timed out"
+    );
 
     if (error || !data) {
       return [];
@@ -196,13 +214,18 @@ export async function getHistoricalBaseline(
   }
 
   try {
-    const { data, error } = await supabase
-      .from("historical_baselines")
-      .select(
-        "revenue_average, orders_average, aov_average, new_customers_average, returning_customers_average"
-      )
-      .eq("store_id", storeId)
-      .maybeSingle();
+    const { data, error } = await withTimeout(
+      (async () =>
+        supabase
+          .from("historical_baselines")
+          .select(
+            "revenue_average, orders_average, aov_average, new_customers_average, returning_customers_average"
+          )
+          .eq("store_id", storeId)
+          .maybeSingle())(),
+      SUPABASE_TIMEOUT_MS,
+      "Supabase baseline query timed out"
+    );
 
     if (error || !data) {
       return getMockHistoricalBaseline(storeId);

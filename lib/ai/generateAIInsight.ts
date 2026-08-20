@@ -4,6 +4,7 @@ import {
   getDeepSeekClient,
   isDeepSeekConfigured,
 } from "@/lib/ai/deepseek";
+import { withTimeout } from "@/lib/utils/withTimeout";
 import type {
   AIInsightResult,
   DiagnosisResult,
@@ -11,6 +12,7 @@ import type {
 } from "@/types";
 
 const LOW_TEMPERATURE = 0.2;
+const DEEPSEEK_TIMEOUT_MS = 25000;
 
 const SYSTEM_PROMPT = `【角色】
 你是一个餐饮经营顾问AI。
@@ -123,15 +125,19 @@ export async function generateAIInsight(
   const model =
     process.env.DEEPSEEK_MODEL?.trim() || "deepseek-v4-flash";
 
-  const response = await openai.chat.completions.create({
-    model,
-    temperature: LOW_TEMPERATURE,
-    response_format: { type: "json_object" },
-    messages: [
-      { role: "system", content: SYSTEM_PROMPT },
-      { role: "user", content: buildUserPrompt(diagnosis) },
-    ],
-  });
+  const response = await withTimeout(
+    openai.chat.completions.create({
+      model,
+      temperature: LOW_TEMPERATURE,
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: buildUserPrompt(diagnosis) },
+      ],
+    }),
+    DEEPSEEK_TIMEOUT_MS,
+    "DeepSeek insight generation timed out"
+  );
 
   const content = response.choices[0]?.message?.content?.trim();
   if (!content) {

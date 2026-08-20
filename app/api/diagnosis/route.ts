@@ -1,9 +1,9 @@
 import { apiErrorResponse } from "@/lib/api/apiErrorResponse";
+import { buildDiagnosisResponse } from "@/lib/api/pageDataService";
 import { parseApiQueryParams } from "@/lib/api/parseQueryParams";
 import {
   getDefaultQueryDate,
 } from "@/lib/services/businessContextService";
-import { getOrCreateDailyDiagnosisSnapshot } from "@/lib/services/dailyDiagnosisSnapshotService";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
@@ -13,15 +13,7 @@ export async function GET(request: Request) {
       getDefaultQueryDate()
     );
 
-    const snapshot = await getOrCreateDailyDiagnosisSnapshot(storeId, date);
-
-    return NextResponse.json({
-      store: snapshot.store,
-      metrics: snapshot.metrics,
-      diagnosis: snapshot.diagnosis,
-      aiInsight: snapshot.aiInsight,
-      fromSnapshot: snapshot.fromSnapshot,
-    });
+    return NextResponse.json(await buildDiagnosisResponse(storeId, date));
   } catch (error) {
     return apiErrorResponse(error);
   }

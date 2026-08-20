@@ -5,61 +5,31 @@ import {
   getDashboardFallback,
   getDiagnosisFallback,
 } from "@/lib/api/fallbackData";
+import {
+  buildActionPlanResponse,
+  buildDashboardResponse,
+  buildDiagnosisResponse,
+  getDefaultPageQuery,
+} from "@/lib/api/pageDataService";
 import type {
   ActionPlanApiResponse,
   DashboardApiResponse,
   DiagnosisApiResponse,
   PageDataResult,
 } from "@/lib/api/apiTypes";
-import { getDefaultQueryDate } from "@/lib/services/businessContextService";
-import { getOrCreateDailyDiagnosisSnapshot } from "@/lib/services/dailyDiagnosisSnapshotService";
-
-function getApiBaseUrl(): string {
-  if (process.env.NEXT_PUBLIC_APP_URL?.trim()) {
-    return process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "");
-  }
-  if (process.env.VERCEL_URL?.trim()) {
-    return `https://${process.env.VERCEL_URL}`;
-  }
-  const port = process.env.PORT ?? "3000";
-  return `http://127.0.0.1:${port}`;
-}
-
-async function fetchJson<T>(path: string): Promise<T | null> {
-  const url = `${getApiBaseUrl()}${path}`;
-
-  try {
-    const response = await fetch(url, {
-      cache: "no-store",
-      headers: { Accept: "application/json" },
-    });
-
-    if (!response.ok) {
-      console.warn(`[serverFetch] ${path} failed: HTTP ${response.status}`);
-      return null;
-    }
-
-    return (await response.json()) as T;
-  } catch (error) {
-    console.warn(`[serverFetch] ${path} failed:`, error);
-    return null;
-  }
-}
-
-function defaultQuery(): string {
-  const date = getDefaultQueryDate();
-  return `?storeId=store-001&date=${encodeURIComponent(date)}`;
-}
 
 export async function fetchDashboardPageData(): Promise<
   PageDataResult<DashboardApiResponse>
 > {
-  const apiData = await fetchJson<DashboardApiResponse>(
-    `/api/dashboard${defaultQuery()}`
-  );
+  const { storeId, date } = getDefaultPageQuery();
 
-  if (apiData?.store && apiData?.metrics) {
-    return { data: apiData, source: "api" };
+  try {
+    const data = await buildDashboardResponse(storeId, date);
+    if (data.store && data.metrics) {
+      return { data, source: "api" };
+    }
+  } catch (error) {
+    console.warn("[serverFetch] dashboard direct load failed:", error);
   }
 
   return { data: getDashboardFallback(), source: "fallback" };
@@ -68,29 +38,15 @@ export async function fetchDashboardPageData(): Promise<
 export async function fetchDiagnosisPageData(): Promise<
   PageDataResult<DiagnosisApiResponse>
 > {
-  const apiData = await fetchJson<DiagnosisApiResponse>(
-    `/api/diagnosis${defaultQuery()}`
-  );
-
-  if (apiData?.store && apiData?.diagnosis) {
-    return { data: apiData, source: "api" };
-  }
+  const { storeId, date } = getDefaultPageQuery();
 
   try {
-    const date = getDefaultQueryDate();
-    const snapshot = await getOrCreateDailyDiagnosisSnapshot("store-001", date);
-    return {
-      data: {
-        store: snapshot.store,
-        metrics: snapshot.metrics,
-        diagnosis: snapshot.diagnosis,
-        aiInsight: snapshot.aiInsight,
-        fromSnapshot: snapshot.fromSnapshot,
-      },
-      source: "api",
-    };
+    const data = await buildDiagnosisResponse(storeId, date);
+    if (data.store && data.diagnosis) {
+      return { data, source: "api" };
+    }
   } catch (error) {
-    console.warn("[serverFetch] direct snapshot failed:", error);
+    console.warn("[serverFetch] diagnosis direct load failed:", error);
   }
 
   return { data: getDiagnosisFallback(), source: "fallback" };
@@ -99,12 +55,15 @@ export async function fetchDiagnosisPageData(): Promise<
 export async function fetchActionPlanPageData(): Promise<
   PageDataResult<ActionPlanApiResponse>
 > {
-  const apiData = await fetchJson<ActionPlanApiResponse>(
-    `/api/action-plan${defaultQuery()}`
-  );
+  const { storeId, date } = getDefaultPageQuery();
 
-  if (apiData?.store && apiData?.plan) {
-    return { data: apiData, source: "api" };
+  try {
+    const data = await buildActionPlanResponse(storeId, date);
+    if (data.store && data.plan) {
+      return { data, source: "api" };
+    }
+  } catch (error) {
+    console.warn("[serverFetch] action-plan direct load failed:", error);
   }
 
   return { data: getActionPlanFallback(), source: "fallback" };

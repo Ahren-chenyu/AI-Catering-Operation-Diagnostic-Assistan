@@ -1,7 +1,10 @@
 import "server-only";
 
 import { getSupabaseAdmin, isSupabaseConfigured } from "@/lib/db/supabase";
+import { withTimeout } from "@/lib/utils/withTimeout";
 import type { DiagnosisSnapshotPayload } from "@/types";
+
+const SUPABASE_TIMEOUT_MS = 5000;
 
 export async function getDiagnosisSnapshot(
   storeId: string,
@@ -17,12 +20,17 @@ export async function getDiagnosisSnapshot(
   }
 
   try {
-    const { data, error } = await supabase
-      .from("diagnosis_snapshots")
-      .select("diagnosis_result")
-      .eq("store_id", storeId)
-      .eq("diagnosis_date", diagnosisDate)
-      .maybeSingle();
+    const { data, error } = await withTimeout(
+      (async () =>
+        supabase
+          .from("diagnosis_snapshots")
+          .select("diagnosis_result")
+          .eq("store_id", storeId)
+          .eq("diagnosis_date", diagnosisDate)
+          .maybeSingle())(),
+      SUPABASE_TIMEOUT_MS,
+      "Supabase diagnosis snapshot query timed out"
+    );
 
     if (error || !data) {
       return null;
@@ -48,14 +56,19 @@ export async function saveDiagnosisSnapshot(
     return;
   }
 
-  const { error } = await supabase.from("diagnosis_snapshots").upsert(
-    {
-      store_id: storeId,
-      diagnosis_date: diagnosisDate,
-      diagnosis_result: payload,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "store_id,diagnosis_date" }
+  const { error } = await withTimeout(
+    (async () =>
+      supabase.from("diagnosis_snapshots").upsert(
+        {
+          store_id: storeId,
+          diagnosis_date: diagnosisDate,
+          diagnosis_result: payload,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "store_id,diagnosis_date" }
+      ))(),
+    SUPABASE_TIMEOUT_MS,
+    "Supabase diagnosis snapshot save timed out"
   );
 
   if (error) {
