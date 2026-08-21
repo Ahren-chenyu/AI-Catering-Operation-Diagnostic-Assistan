@@ -1,0 +1,8 @@
+{
+  "version": "2.0",
+  "envId": "ai-catering-operations-dcaea77ac",
+  "cloudrun": {
+    "serviceName": "ai-catering-assistant",
+    "port": 3000
+  }
+}

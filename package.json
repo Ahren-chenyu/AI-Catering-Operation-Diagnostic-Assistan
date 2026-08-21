@@ -6,7 +6,10 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "login:cloudbase": "tcb login",
+    "deploy:cloudbase": "tcb cloudrun deploy -s ai-catering-assistant --port 3000 --force",
+    "deploy:cloudbase:env": "node scripts/deploy-cloudbase.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.3",
@@ -17,6 +20,7 @@
     "server-only": "^0.0.1"
   },
   "devDependencies": {
+    "@cloudbase/cli": "^3.8.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
