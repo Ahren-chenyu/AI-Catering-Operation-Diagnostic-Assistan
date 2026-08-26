@@ -3,12 +3,12 @@ import Sidebar from "@/components/layout/Sidebar";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "AI餐饮经营与增长助手",
+  title: "AI餐饮经营助手",
   description:
     "经营诊断 + 用户增长闭环：发现问题 → 定位用户 → AI 策略 → 执行模拟 → 效果复盘。",
   appleWebApp: {
     capable: true,
-    title: "AI餐饮经营与增长助手",
+    title: "AI餐饮经营助手",
   },
   other: {
     "format-detection": "telephone=no, email=no, address=no",

@@ -1,9 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cn, formatCurrency } from "@/lib/utils";
 import { buildAIPortrait } from "@/lib/growth/portrait";
-import type { GrowthUser } from "@/types/growth";
+import { AiSourceBadge } from "@/components/growth/AiSourceBadge";
+import type { AIPortrait, GrowthUser } from "@/types/growth";
+
+type PortraitState = AIPortrait & { source: "deepseek" | "rules" };
 
 export default function UserPortraitPanel({
   users,
@@ -16,7 +19,46 @@ export default function UserPortraitPanel({
     users[0]?.userId ?? null
   );
   const selected = users.find((u) => u.userId === selectedId) ?? null;
-  const portrait = selected ? buildAIPortrait(selected, asOfDate) : null;
+  const [portrait, setPortrait] = useState<PortraitState | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!selected) {
+      setPortrait(null);
+      return;
+    }
+
+    const fallback = {
+      ...buildAIPortrait(selected, asOfDate),
+      source: "rules" as const,
+    };
+    setPortrait(fallback);
+    setLoading(true);
+
+    let cancelled = false;
+    fetch("/api/growth/portrait", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: selected.userId }),
+    })
+      .then(async (res) => {
+        if (!res.ok) throw new Error("portrait api failed");
+        return res.json() as Promise<{ portrait: PortraitState }>;
+      })
+      .then((data) => {
+        if (!cancelled && data.portrait) setPortrait(data.portrait);
+      })
+      .catch(() => {
+        if (!cancelled) setPortrait(fallback);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selected, asOfDate]);
 
   const display = users.slice(0, 80);
 
@@ -65,7 +107,7 @@ export default function UserPortraitPanel({
                     {formatCurrency(u.avgOrderValue)}
                   </td>
                   <td className="px-3 py-2 text-stone-600">
-                    <span className="block truncate max-w-[120px]">
+                    <span className="block max-w-[120px] truncate">
                       {u.favoriteCategory}
                     </span>
                     <span className="text-xs text-stone-400">
@@ -90,13 +132,21 @@ export default function UserPortraitPanel({
       <div className="lg:col-span-2">
         {selected && portrait ? (
           <div className="sticky top-20 space-y-4 rounded-xl border border-stone-200 bg-white p-5 shadow-card">
-            <div>
-              <p className="text-xs font-medium uppercase tracking-wider text-stone-400">
-                AI 用户画像
-              </p>
-              <h3 className="mt-1 text-base font-semibold text-stone-900">
-                {selected.userId}
-              </h3>
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wider text-stone-400">
+                  AI 用户画像
+                </p>
+                <h3 className="mt-1 text-base font-semibold text-stone-900">
+                  {selected.userId}
+                </h3>
+              </div>
+              <div className="flex flex-col items-end gap-1">
+                <AiSourceBadge source={portrait.source} />
+                {loading && (
+                  <span className="text-[11px] text-stone-400">生成中…</span>
+                )}
+              </div>
             </div>
             <p className="text-sm leading-relaxed text-stone-700">
               {portrait.summary}
@@ -122,7 +172,7 @@ export default function UserPortraitPanel({
               ))}
             </div>
             <p className="text-[11px] text-stone-400">
-              画像仅引用当前用户字段，不编造冲突数据。
+              画像仅引用当前用户字段；LLM 失败时自动回退规则引擎。
             </p>
           </div>
         ) : (

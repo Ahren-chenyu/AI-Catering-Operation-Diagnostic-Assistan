@@ -1,4 +1,4 @@
-# AI餐饮经营与增长助手
+# AI餐饮经营助手
 
 > 让餐饮经营者不仅知道门店发生了什么，还能知道该运营哪些用户、用什么策略增长，以及活动做得怎么样。
 
@@ -53,15 +53,15 @@
 
 | 模块 | 路径 | 作用 |
 |------|------|------|
-| 经营驾驶舱 | `/dashboard` | 今日经营概览与异常提醒 |
-| AI经营诊断 | `/diagnosis` | 规则诊断 + DeepSeek 解读 |
-| AI行动指南 | `/action-plan` | 可执行行动方案 |
+| 自动汇报 | `/dashboard` | 今日经营概览与异常提醒 |
+| 经营诊断 | `/diagnosis` | 规则诊断 + DeepSeek 解读 |
+| 行动指南 | `/action-plan` | 可执行行动方案 |
 | 经营复盘 | `/review-records` | 行动轮次复盘 |
 | 用户分析 | `/growth` | 增长 KPI、趋势、机会预览 |
 | 用户分层 | `/growth/segments` | RFM 五群表 + 明细/画像 |
 | 增长机会 | `/growth/opportunities` | 规则引擎发现的可行动机会 |
 | 营销策略 | `/growth/strategy/[id]` | 结构化方案 + 为什么推荐 + 创建任务 |
-| 策略与复盘 | `/growth/campaigns` | 活动列表、ROI、AI 复盘 |
+| 营销策略与复盘 | `/growth/campaigns` | 活动列表、ROI、AI 复盘 |
 | 增长路径 | `/growth/path` | 公域→私域增长流程图 |
 | AI架构 | `/growth/architecture` | 流水线 + 4 Agent 概念 |
 | 项目说明 | `/about` | 背景、我的工作、能力验证映射 |

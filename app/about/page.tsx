@@ -51,7 +51,7 @@ export default function AboutPage() {
         <div className="mb-8 max-w-3xl">
           <h2 className="text-xl font-bold text-stone-900">项目说明</h2>
           <p className="mt-2 text-sm leading-relaxed text-stone-600">
-            「AI餐饮经营与增长助手」面向中小餐饮商家：在经营数据之上叠加决策与增长层，
+            「AI餐饮经营助手」面向中小餐饮商家：在经营数据之上叠加决策与增长层，
             帮助老板走完「发生了什么 → 为什么 → 运营谁 → 怎么做 → 效果如何」。
           </p>
         </div>
@@ -110,7 +110,7 @@ export default function AboutPage() {
         </section>
 
         <div className="flex flex-wrap gap-3">
-          <ButtonLink href="/dashboard">从经营驾驶舱开始</ButtonLink>
+          <ButtonLink href="/dashboard">从自动汇报开始</ButtonLink>
           <ButtonLink href="/growth" variant="secondary">
             进入用户增长中心
           </ButtonLink>

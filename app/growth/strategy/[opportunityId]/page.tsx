@@ -4,7 +4,8 @@ import Header from "@/components/layout/Header";
 import CreateCampaignButton from "@/components/growth/CreateCampaignButton";
 import { formatCurrency } from "@/lib/utils";
 import { getGrowthDashboardData } from "@/lib/growth/metrics";
-import { generateMarketingStrategy } from "@/lib/growth/strategyEngine";
+import { resolveMarketingStrategy } from "@/lib/growth/aiStrategy";
+import { AiSourceBadge } from "@/components/growth/AiSourceBadge";
 import type { OpportunityId } from "@/types/growth";
 
 const OPPORTUNITY_IDS: OpportunityId[] = [
@@ -46,7 +47,7 @@ export default async function StrategyPage({
     };
   }
 
-  const strategy = generateMarketingStrategy(opportunity);
+  const strategy = await resolveMarketingStrategy(opportunity);
   const f = strategy.forecast;
   const repeatBefore = Number(opportunity.evidenceMetrics.repeatRate ?? 0);
 
@@ -61,9 +62,12 @@ export default async function StrategyPage({
           >
             ← 返回增长机会
           </Link>
-          <h2 className="mt-2 text-xl font-bold text-stone-900">AI 营销策略</h2>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <h2 className="text-xl font-bold text-stone-900">AI 营销策略</h2>
+            <AiSourceBadge source={strategy.source} />
+          </div>
           <p className="mt-1 text-sm text-stone-500">
-            基于「{opportunity.title}」由规则引擎生成结构化方案（可 DeepSeek 增强文案，失败回退本方案）
+            基于「{opportunity.title}」生成结构化方案：优先调用 DeepSeek，失败自动回退规则引擎
           </p>
         </div>
 

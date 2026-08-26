@@ -8,7 +8,11 @@ import {
   mergeCampaigns,
 } from "@/lib/growth/campaignStorage";
 import { generateCampaignReview } from "@/lib/growth/campaignReview";
+import { AiSourceBadge } from "@/components/growth/AiSourceBadge";
 import type { GrowthCampaign } from "@/types/growth";
+import type { CampaignReviewAI } from "@/lib/growth/campaignReview";
+
+type ReviewState = CampaignReviewAI & { source: "deepseek" | "rules" };
 
 const statusStyle = {
   准备中: "bg-stone-100 text-stone-700",
@@ -23,6 +27,8 @@ export default function CampaignsClient({
 }) {
   const [local, setLocal] = useState<GrowthCampaign[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [review, setReview] = useState<ReviewState | null>(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     setLocal(loadLocalCampaigns());
@@ -41,7 +47,44 @@ export default function CampaignsClient({
   }, [campaigns, selectedId]);
 
   const selected = campaigns.find((c) => c.campaignId === selectedId) ?? null;
-  const review = selected ? generateCampaignReview(selected) : null;
+
+  useEffect(() => {
+    if (!selected) {
+      setReview(null);
+      return;
+    }
+
+    const fallback: ReviewState = {
+      ...generateCampaignReview(selected),
+      source: "rules",
+    };
+    setReview(fallback);
+    setLoading(true);
+
+    let cancelled = false;
+    fetch("/api/growth/campaign-review", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ campaign: selected }),
+    })
+      .then(async (res) => {
+        if (!res.ok) throw new Error("review api failed");
+        return res.json() as Promise<{ review: ReviewState }>;
+      })
+      .then((data) => {
+        if (!cancelled && data.review) setReview(data.review);
+      })
+      .catch(() => {
+        if (!cancelled) setReview(fallback);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selected]);
 
   return (
     <div className="grid gap-6 lg:grid-cols-5">
@@ -91,17 +134,25 @@ export default function CampaignsClient({
       <div className="lg:col-span-3">
         {selected && review ? (
           <div className="space-y-4 rounded-xl border border-stone-200 bg-white p-6 shadow-card">
-            <div>
-              <p className="text-xs font-medium uppercase tracking-wider text-stone-400">
-                营销效果复盘
-              </p>
-              <h3 className="mt-1 text-lg font-semibold text-stone-900">
-                {selected.campaignName}
-              </h3>
-              <p className="mt-1 text-sm text-stone-500">
-                {selected.campaignId} · 权益 {selected.benefit} · 渠道{" "}
-                {selected.channels.join(" / ")} · {selected.sendTime}
-              </p>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wider text-stone-400">
+                  营销效果复盘
+                </p>
+                <h3 className="mt-1 text-lg font-semibold text-stone-900">
+                  {selected.campaignName}
+                </h3>
+                <p className="mt-1 text-sm text-stone-500">
+                  {selected.campaignId} · 权益 {selected.benefit} · 渠道{" "}
+                  {selected.channels.join(" / ")} · {selected.sendTime}
+                </p>
+              </div>
+              <div className="flex flex-col items-end gap-1">
+                <AiSourceBadge source={review.source} />
+                {loading && (
+                  <span className="text-[11px] text-stone-400">AI 分析中…</span>
+                )}
+              </div>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

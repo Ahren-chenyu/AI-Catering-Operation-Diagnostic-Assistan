@@ -4,9 +4,12 @@ import OpportunityCard from "@/components/growth/OpportunityCard";
 import SimpleLineChart, { ChartCard } from "@/components/growth/SimpleLineChart";
 import ButtonLink from "@/components/ui/ButtonLink";
 import { getGrowthDashboardData } from "@/lib/growth/metrics";
+import { resolveOpportunityInsight } from "@/lib/growth/aiOpportunityInsight";
+import { AiSourceBadge } from "@/components/growth/AiSourceBadge";
 
-export default function GrowthPage() {
+export default async function GrowthPage() {
   const data = getGrowthDashboardData();
+  const insight = await resolveOpportunityInsight(data.opportunities);
 
   return (
     <>
@@ -71,6 +74,17 @@ export default function GrowthPage() {
               color="#933518"
             />
           </ChartCard>
+        </section>
+
+        <section className="mt-8 rounded-xl border border-violet-100 bg-violet-50/40 p-5 shadow-card">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-xs font-medium uppercase tracking-wider text-violet-500">
+              AI 用户增长解读
+            </p>
+            <AiSourceBadge source={insight.source} />
+          </div>
+          <p className="mt-2 text-base font-semibold text-stone-900">{insight.headline}</p>
+          <p className="mt-2 text-sm leading-relaxed text-stone-700">{insight.narrative}</p>
         </section>
 
         <section className="mt-8">
