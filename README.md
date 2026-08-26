@@ -212,6 +212,8 @@ AI 增长策略 → 营销任务 → 效果数据 → AI 复盘
 
 若已部署 CloudBase / 其他托管，将访问地址写在此处。未部署时请用本地运行。
 
+GitHub 仓库：[Ahren-chenyu/AI-Catering-Operation-Assistant](https://github.com/Ahren-chenyu/AI-Catering-Operation-Assistant)
+
 ---
 
 ## 本地运行方式
